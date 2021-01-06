@@ -2355,6 +2355,7 @@ static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, stru
 {
 	struct atom_value *va, *vb;
 	int cmp;
+	int cmp_detached_head = 0;
 	cmp_type cmp_type = used_atom[s->atom].type;
 	int (*cmp_fn)(const char *, const char *);
 	struct strbuf err = STRBUF_INIT;
@@ -2370,6 +2371,7 @@ static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, stru
 	     ^
 	     (b->kind & FILTER_REFS_DETACHED_HEAD))) {
 		cmp = compare_detached_head(a, b);
+		cmp_detached_head = 1;
 	} else if (s->version)
 		cmp = versioncmp(va->s, vb->s);
 	else if (cmp_type == FIELD_STR)
@@ -2383,7 +2385,7 @@ static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, stru
 			cmp = 1;
 	}
 
-	return (s->reverse) ? -cmp : cmp;
+	return (s->reverse && !cmp_detached_head) ? -cmp : cmp;
 }
 
 static int compare_refs(const void *a_, const void *b_, void *ref_sorting)
