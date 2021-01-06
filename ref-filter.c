@@ -2350,6 +2350,16 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 	return ret;
 }
 
+static int compare_detached_head(struct ref_array_item *a, struct ref_array_item *b)
+{
+	if (a->kind & FILTER_REFS_DETACHED_HEAD)
+		return -1;
+	else if (b->kind & FILTER_REFS_DETACHED_HEAD)
+		return 1;
+	BUG("compare_detached_head() is guarded by an xor on [ab]->kind & FILTER_REFS_DETACHED_HEAD");
+	return 0;
+}
+
 static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, struct ref_array_item *b)
 {
 	struct atom_value *va, *vb;
@@ -2364,7 +2374,12 @@ static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, stru
 		die("%s", err.buf);
 	strbuf_release(&err);
 	cmp_fn = s->ignore_case ? strcasecmp : strcmp;
-	if (s->version)
+	if (s->detached_head_first &&
+	    ((a->kind & FILTER_REFS_DETACHED_HEAD)
+	     ^
+	     (b->kind & FILTER_REFS_DETACHED_HEAD))) {
+		cmp = compare_detached_head(a, b);
+	} else if (s->version)
 		cmp = versioncmp(va->s, vb->s);
 	else if (cmp_type == FIELD_STR)
 		cmp = cmp_fn(va->s, vb->s);
@@ -2401,6 +2416,12 @@ void ref_sorting_icase_all(struct ref_sorting *sorting, int flag)
 {
 	for (; sorting; sorting = sorting->next)
 		sorting->ignore_case = !!flag;
+}
+
+void ref_sorting_detached_head_first_all(struct ref_sorting *sorting, int flag)
+{
+	for (; sorting; sorting = sorting->next)
+		sorting->detached_head_first = !!flag;
 }
 
 void ref_array_sort(struct ref_sorting *sorting, struct ref_array *array)
