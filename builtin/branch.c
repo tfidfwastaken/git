@@ -740,6 +740,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		if (!sorting)
 			sorting = ref_default_sorting();
 		ref_sorting_icase_all(sorting, icase);
+		ref_sorting_detached_head_first_all(sorting, 1);
 		print_ref_list(&filter, sorting, &format);
 		print_columns(&output, colopts, NULL);
 		string_list_clear(&output, 0);
