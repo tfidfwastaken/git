@@ -89,6 +89,7 @@ struct config_options {
 	unsigned int ignore_cmdline : 1;
 	unsigned int system_gently : 1;
 	struct repository *repo;
+	const char *pretend_gitdir;
 	config_parser_event_fn_t event_fn;
 	void *event_fn_data;
 	enum config_error_action {

@@ -225,6 +225,8 @@ static int include_by_gitdir(const struct config_options *opts,
 
 	if (opts->repo && opts->repo->gitdir)
 		git_dir = opts->repo->gitdir;
+	else if (opts->pretend_gitdir)
+		git_dir = opts->pretend_gitdir;
 	else
 		goto done;
 

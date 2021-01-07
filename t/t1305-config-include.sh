@@ -162,6 +162,27 @@ test_expect_success 'relative includes from stdin line fail' '
 	test_must_fail git config --file - test.one
 '
 
+test_expect_success 'conditional include, pretend gitdir' '
+	test_when_finished "git config --global --unset-all \"includeif.gitdir:*.path\"" &&
+	git config --global "includeif.gitdir:*.path" included &&
+
+	git config --file included "custom.variable" value &&
+	echo value >expect &&
+
+	# in the TRASH repository
+	git config --get custom.variable >actual &&
+	test_cmp expect actual &&
+
+	# nongit without pretend should not find stuff from included
+	nongit test_must_fail git config --get custom.variable >actual &&
+	test_must_be_empty actual &&
+
+	# nongit with pretend should find stuff from included
+	nongit git config --pretend-gitdir "$(pwd)/.git" \
+		--get custom.variable >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'conditional include, both unanchored' '
 	git init foo &&
 	(

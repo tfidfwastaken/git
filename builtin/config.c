@@ -30,6 +30,7 @@ static int use_worktree_config;
 static struct git_config_source given_config_source;
 static int actions, type;
 static char *default_value;
+static char *pretend_gitdir;
 static int end_nul;
 static int respect_includes_opt = -1;
 static struct config_options config_options;
@@ -165,6 +166,7 @@ static struct option builtin_config_options[] = {
 	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")),
 	OPT_BOOL(0, "show-scope", &show_scope, N_("show scope of config (worktree, local, global, system, command)")),
 	OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
+	OPT_FILENAME(0, "pretend-gitdir", &pretend_gitdir, N_("when outside a repository, pretend this is the gitdir")),
 	OPT_END(),
 };
 
@@ -730,6 +732,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		config_options.respect_includes = respect_includes_opt;
 	if (!nongit)
 		config_options.repo = the_repository;
+	if (pretend_gitdir)
+		config_options.pretend_gitdir = pretend_gitdir;
 
 	if (end_nul) {
 		term = '\0';
