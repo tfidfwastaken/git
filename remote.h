@@ -198,7 +198,8 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     struct ref **list, int for_push,
 			     const struct strvec *ref_prefixes,
 			     const struct string_list *server_options,
-			     int stateless_rpc);
+			     int stateless_rpc,
+			     char **unborn_head_target);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 

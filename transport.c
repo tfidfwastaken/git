@@ -127,7 +127,8 @@ struct bundle_transport_data {
 
 static struct ref *get_refs_from_bundle(struct transport *transport,
 					int for_push,
-					const struct strvec *ref_prefixes)
+					const struct strvec *ref_prefixes,
+					char **unborn_head_target)
 {
 	struct bundle_transport_data *data = transport->data;
 	struct ref *result = NULL;
@@ -163,7 +164,7 @@ static int fetch_refs_from_bundle(struct transport *transport,
 	int ret;
 
 	if (!data->get_refs_from_bundle_called)
-		get_refs_from_bundle(transport, 0, NULL);
+		get_refs_from_bundle(transport, 0, NULL, NULL);
 	ret = unbundle(the_repository, &data->header, data->fd,
 			   transport->progress ? BUNDLE_VERBOSE : 0);
 	transport->hash_algo = data->header.hash_algo;
@@ -281,7 +282,7 @@ static void die_if_server_options(struct transport *transport)
  */
 static struct ref *handshake(struct transport *transport, int for_push,
 			     const struct strvec *ref_prefixes,
-			     int must_list_refs)
+			     int must_list_refs, char **unborn_head_target)
 {
 	struct git_transport_data *data = transport->data;
 	struct ref *refs = NULL;
@@ -305,7 +306,8 @@ static struct ref *handshake(struct transport *transport, int for_push,
 			get_remote_refs(data->fd[1], &reader, &refs, for_push,
 					ref_prefixes,
 					transport->server_options,
-					transport->stateless_rpc);
+					transport->stateless_rpc,
+					unborn_head_target);
 		break;
 	case protocol_v1:
 	case protocol_v0:
@@ -334,9 +336,11 @@ static struct ref *handshake(struct transport *transport, int for_push,
 }
 
 static struct ref *get_refs_via_connect(struct transport *transport, int for_push,
-					const struct strvec *ref_prefixes)
+					const struct strvec *ref_prefixes,
+					char **unborn_head_target)
 {
-	return handshake(transport, for_push, ref_prefixes, 1);
+	return handshake(transport, for_push, ref_prefixes, 1,
+			 unborn_head_target);
 }
 
 static int fetch_refs_via_pack(struct transport *transport,
@@ -380,7 +384,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 				break;
 			}
 		}
-		refs_tmp = handshake(transport, 0, NULL, must_list_refs);
+		refs_tmp = handshake(transport, 0, NULL, must_list_refs, NULL);
 	}
 
 	if (data->version == protocol_unknown_version)
@@ -775,7 +779,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 		return -1;
 
 	if (!data->got_remote_heads)
-		get_refs_via_connect(transport, 1, NULL);
+		get_refs_via_connect(transport, 1, NULL, NULL);
 
 	memset(&args, 0, sizeof(args));
 	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
@@ -1261,7 +1265,8 @@ int transport_push(struct repository *r,
 
 		trace2_region_enter("transport_push", "get_refs_list", r);
 		remote_refs = transport->vtable->get_refs_list(transport, 1,
-							       &ref_prefixes);
+							       &ref_prefixes,
+							       NULL);
 		trace2_region_leave("transport_push", "get_refs_list", r);
 
 		strvec_clear(&ref_prefixes);
@@ -1380,12 +1385,14 @@ int transport_push(struct repository *r,
 }
 
 const struct ref *transport_get_remote_refs(struct transport *transport,
-					    const struct strvec *ref_prefixes)
+					    const struct strvec *ref_prefixes,
+					    char **unborn_head_target)
 {
 	if (!transport->got_remote_refs) {
 		transport->remote_refs =
 			transport->vtable->get_refs_list(transport, 0,
-							 ref_prefixes);
+							 ref_prefixes,
+							 unborn_head_target);
 		transport->got_remote_refs = 1;
 	}
 

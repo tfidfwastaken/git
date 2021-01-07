@@ -241,9 +241,14 @@ int transport_push(struct repository *repo,
  * advertisement.  Since ref filtering is done on the server's end (and only
  * when using protocol v2), this can return refs which don't match the provided
  * ref_prefixes.
+ *
+ * If unborn_head_target is not NULL, and the remote reports HEAD as pointing
+ * to an unborn branch, this function stores the unborn branch in
+ * unborn_head_target. It should be freed by the caller.
  */
 const struct ref *transport_get_remote_refs(struct transport *transport,
-					    const struct strvec *ref_prefixes);
+					    const struct strvec *ref_prefixes,
+					    char **unborn_head_target);
 
 /*
  * Fetch the hash algorithm used by a remote.

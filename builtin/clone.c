@@ -980,6 +980,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int submodule_progress;
 
 	struct strvec ref_prefixes = STRVEC_INIT;
+	char *unborn_head_target = NULL;
 
 	packet_trace_identity("clone");
 
@@ -1264,7 +1265,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (!option_no_tags)
 		strvec_push(&ref_prefixes, "refs/tags/");
 
-	refs = transport_get_remote_refs(transport, &ref_prefixes);
+	refs = transport_get_remote_refs(transport, &ref_prefixes,
+					 &unborn_head_target);
 
 	if (refs) {
 		int hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
@@ -1327,10 +1329,20 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		remote_head = NULL;
 		option_no_checkout = 1;
 		if (!option_bare) {
-			const char *branch = git_default_branch_name(0);
-			char *ref = xstrfmt("refs/heads/%s", branch);
+			const char *branch;
+			char *ref;
+
+			if (unborn_head_target &&
+			    skip_prefix(unborn_head_target, "refs/heads/", &branch)) {
+				ref = unborn_head_target;
+				unborn_head_target = NULL;
+			} else {
+				branch = git_default_branch_name(0);
+				ref = xstrfmt("refs/heads/%s", branch);
+			}
 
 			install_branch_config(0, branch, remote_name, ref);
+			create_symref("HEAD", ref, "");
 			free(ref);
 		}
 	}
@@ -1381,6 +1393,7 @@ cleanup:
 	strbuf_release(&key);
 	junk_mode = JUNK_LEAVE_ALL;
 
+	free(unborn_head_target);
 	strvec_clear(&ref_prefixes);
 	return err;
 }

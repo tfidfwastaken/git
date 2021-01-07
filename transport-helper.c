@@ -1162,13 +1162,16 @@ static int has_attribute(const char *attrs, const char *attr)
 }
 
 static struct ref *get_refs_list(struct transport *transport, int for_push,
-				 const struct strvec *ref_prefixes)
+				 const struct strvec *ref_prefixes,
+				 char **unborn_head_target)
 {
 	get_helper(transport);
 
 	if (process_connect(transport, for_push)) {
 		do_take_over(transport);
-		return transport->vtable->get_refs_list(transport, for_push, ref_prefixes);
+		return transport->vtable->get_refs_list(transport, for_push,
+							ref_prefixes,
+							unborn_head_target);
 	}
 
 	return get_refs_list_using_list(transport, for_push);

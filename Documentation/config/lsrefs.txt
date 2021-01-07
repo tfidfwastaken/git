@@ -1,0 +1,3 @@
+lsrefs.allowUnborn::
+	Allow the server to send information about unborn symrefs during the
+	protocol v2 ref advertisement.
