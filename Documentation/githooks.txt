@@ -58,6 +58,8 @@ the message file.
 The default 'applypatch-msg' hook, when enabled, runs the
 'commit-msg' hook, if the latter is enabled.
 
+Hooks run during 'applypatch-msg' will not be parallelized.
+
 pre-applypatch
 ~~~~~~~~~~~~~~
 
@@ -73,6 +75,8 @@ make a commit if it does not pass certain test.
 The default 'pre-applypatch' hook, when enabled, runs the
 'pre-commit' hook, if the latter is enabled.
 
+Hooks run during 'pre-applypatch' will be run in parallel by default.
+
 post-applypatch
 ~~~~~~~~~~~~~~~
 
@@ -81,6 +85,8 @@ and is invoked after the patch is applied and a commit is made.
 
 This hook is meant primarily for notification, and cannot affect
 the outcome of `git am`.
+
+Hooks run during 'post-applypatch' will be run in parallel by default.
 
 pre-commit
 ~~~~~~~~~~
@@ -103,6 +109,8 @@ The default 'pre-commit' hook, when enabled--and with the
 `hooks.allownonascii` config option unset or set to false--prevents
 the use of non-ASCII filenames.
 
+Hooks executed during 'pre-commit' will not be parallelized.
+
 pre-merge-commit
 ~~~~~~~~~~~~~~~~
 
@@ -124,6 +132,8 @@ If the merge cannot be carried out automatically, the conflicts
 need to be resolved and the result committed separately (see
 linkgit:git-merge[1]). At that point, this hook will not be executed,
 but the 'pre-commit' hook will, if it is enabled.
+
+Hooks executed during 'pre-merge-commit' will not be parallelized.
 
 prepare-commit-msg
 ~~~~~~~~~~~~~~~~~~
@@ -150,6 +160,8 @@ be used as replacement for pre-commit hook.
 The sample `prepare-commit-msg` hook that comes with Git removes the
 help message found in the commented portion of the commit template.
 
+Hooks executed during 'prepare-commit-msg' will not be parallelized.
+
 commit-msg
 ~~~~~~~~~~
 
@@ -166,6 +178,8 @@ file.
 The default 'commit-msg' hook, when enabled, detects duplicate
 `Signed-off-by` trailers, and aborts the commit if one is found.
 
+Hooks executed during 'commit-msg' will not be parallelized.
+
 post-commit
 ~~~~~~~~~~~
 
@@ -175,6 +189,8 @@ invoked after a commit is made.
 This hook is meant primarily for notification, and cannot affect
 the outcome of `git commit`.
 
+Hooks executed during 'post-commit' will run in parallel by default.
+
 pre-rebase
 ~~~~~~~~~~
 
@@ -183,6 +199,8 @@ branch from getting rebased.  The hook may be called with one or
 two parameters.  The first parameter is the upstream from which
 the series was forked.  The second parameter is the branch being
 rebased, and is not set when rebasing the current branch.
+
+Hooks executed during 'pre-rebase' will run in parallel by default.
 
 post-checkout
 ~~~~~~~~~~~~~
@@ -206,6 +224,8 @@ This hook can be used to perform repository validity checks, auto-display
 differences from the previous HEAD if different, or set working dir metadata
 properties.
 
+Hooks executed during 'post-checkout' will not be parallelized.
+
 post-merge
 ~~~~~~~~~~
 
@@ -219,6 +239,8 @@ This hook can be used in conjunction with a corresponding pre-commit hook to
 save and restore any form of metadata associated with the working tree
 (e.g.: permissions/ownership, ACLS, etc).  See contrib/hooks/setgitperms.perl
 for an example of how to do this.
+
+Hooks executed during 'post-merge' will run in parallel by default.
 
 pre-push
 ~~~~~~~~
@@ -248,6 +270,8 @@ supplied as it was originally given.
 If this hook exits with a non-zero status, `git push` will abort without
 pushing anything.  Information about why the push is rejected may be sent
 to the user by writing to standard error.
+
+Hooks executed during 'pre-push' will run in parallel by default.
 
 [[pre-receive]]
 pre-receive
@@ -289,6 +313,8 @@ will be set to zero, `GIT_PUSH_OPTION_COUNT=0`.
 
 See the section on "Quarantine Environment" in
 linkgit:git-receive-pack[1] for some caveats.
+
+Hooks executed during 'pre-receive' will not be parallelized.
 
 [[update]]
 update
@@ -334,6 +360,8 @@ for the user.
 The default 'update' hook, when enabled--and with
 `hooks.allowunannotated` config option unset or set to false--prevents
 unannotated tags to be pushed.
+
+Hooks executed during 'update' are run in parallel by default.
 
 [[proc-receive]]
 proc-receive
@@ -397,6 +425,10 @@ the input.  The exit status of the 'proc-receive' hook only determines
 the success or failure of the group of commands sent to it, unless
 atomic push is in use.
 
+It is forbidden to specify more than one hook for 'proc-receive'. If a
+globally-configured 'proc-receive' must be overridden, use
+'hookcmd.<global-hook>.skip = true' to ignore it.
+
 [[post-receive]]
 post-receive
 ~~~~~~~~~~~~
@@ -436,6 +468,8 @@ environment variables will not be set. If the client selects
 to use push options, but doesn't transmit any, the count variable
 will be set to zero, `GIT_PUSH_OPTION_COUNT=0`.
 
+Hooks executed during 'post-receive' are run in parallel by default.
+
 [[post-update]]
 post-update
 ~~~~~~~~~~~
@@ -468,6 +502,8 @@ Both standard output and standard error output are forwarded to
 `git send-pack` on the other end, so you can simply `echo` messages
 for the user.
 
+Hooks run during 'post-update' will be run in parallel by default.
+
 reference-transaction
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -496,6 +532,8 @@ The exit status of the hook is ignored for any state except for the
 "prepared" state. In the "prepared" state, a non-zero exit status will
 cause the transaction to be aborted. The hook will not be called with
 "aborted" state in that case.
+
+Hooks run during 'reference-transaction' will be run in parallel by default.
 
 push-to-checkout
 ~~~~~~~~~~~~~~~~
@@ -527,6 +565,7 @@ that switches branches while
 keeping the local changes in the working tree that do not interfere
 with the difference between the branches.
 
+Hooks executed during 'push-to-checkout' will not be parallelized.
 
 pre-auto-gc
 ~~~~~~~~~~~
@@ -534,6 +573,8 @@ pre-auto-gc
 This hook is invoked by `git gc --auto` (see linkgit:git-gc[1]). It
 takes no parameter, and exiting with non-zero status from this script
 causes the `git gc --auto` to abort.
+
+Hooks run during 'pre-auto-gc' will be run in parallel by default.
 
 post-rewrite
 ~~~~~~~~~~~~
@@ -559,6 +600,8 @@ preceding SP is also omitted.  Currently, no commands pass any
 The hook always runs after the automatic note copying (see
 "notes.rewrite.<command>" in linkgit:git-config[1]) has happened, and
 thus has access to these notes.
+
+Hooks run during 'post-rewrite' will be run in parallel by default.
 
 The following command-specific comments apply:
 
@@ -688,6 +731,8 @@ and "0" meaning they were not.
 
 Only one parameter should be set to "1" when the hook runs.  The hook
 running passing "1", "1" should not be possible.
+
+Hooks run during 'post-index-change' will be run in parallel by default.
 
 GIT
 ---
