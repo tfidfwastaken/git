@@ -138,12 +138,36 @@ Git index format
 
 === Cached tree
 
-  Cached tree extension contains pre-computed hashes for trees that can
-  be derived from the index. It helps speed up tree object generation
-  from index for a new commit.
+  Since the index does not record entries for directories, the cache
+  entries cannot describe tree objects that already exist in the object
+  database for regions of the index that are unchanged from an existing
+  commit. The cached tree extension stores a recursive tree structure that
+  describes the trees that already exist and completely match sections of
+  the cache entries. This speeds up tree object generation from the index
+  for a new commit by only computing the trees that are "new" to that
+  commit.
 
-  When a path is updated in index, the path must be invalidated and
-  removed from tree cache.
+  The recursive tree structure uses nodes that store a number of cache
+  entries, a list of subnodes, and an object ID (OID). The OID references
+  the exising tree for that node, if it is known to exist. The subnodes
+  correspond to subdirectories that themselves have cached tree nodes. The
+  number of cache entries corresponds to the number of cache entries in
+  the index that describe paths within that tree's directory.
+
+  Note that the path for a given tree is part of the parent node in-memory
+  but is part of the child in the file format. The root tree has an empty
+  string for its name and its name does not exist in-memory.
+
+  When a path is updated in index, Git invalidates all nodes of the
+  recurisive cached tree corresponding to the parent directories of that
+  path. We store these tree nodes as being "invalid" by using "-1" as the
+  number of cache entries. To create trees corresponding to the current
+  index, Git only walks the invalid tree nodes and uses the cached OIDs
+  for the valid trees to construct new trees. In this way, Git only
+  constructs trees on the order of the number of changed paths (and their
+  depth in the working directory). This comes at a cost of tracking the
+  full directory structure in the cached tree extension, but this is
+  generally smaller than the full cache entry list in the index.
 
   The signature for this extension is { 'T', 'R', 'E', 'E' }.
 
@@ -174,7 +198,8 @@ Git index format
   first entry represents the root level of the repository, followed by the
   first subtree--let's call this A--of the root level (with its name
   relative to the root level), followed by the first subtree of A (with
-  its name relative to A), ...
+  its name relative to A), and so on. The specified number of subtrees
+  indicates when the current level of the recursive stack is complete.
 
 === Resolve undo
 
