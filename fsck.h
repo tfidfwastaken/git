@@ -118,6 +118,8 @@ struct fsck_options {
 	unsigned strict:1;
 	enum fsck_msg_type *msg_type;
 	struct oidset skiplist;
+	struct oidset gitmodules_found;
+	struct oidset gitmodules_done;
 	kh_oid_map_t *object_names;
 };
 
@@ -125,6 +127,8 @@ struct fsck_options {
 	.walk = NULL, \
 	.msg_type = NULL, \
 	.skiplist = OIDSET_INIT, \
+	.gitmodules_found = OIDSET_INIT, \
+	.gitmodules_done = OIDSET_INIT, \
 	.object_names = NULL,
 #define FSCK_OPTIONS_COMMON_ERROR_FUNC \
 	FSCK_OPTIONS_COMMON \
@@ -149,7 +153,8 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options);
 int fsck_object(struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options);
 
-void register_found_gitmodules(const struct object_id *oid);
+void register_found_gitmodules(struct fsck_options *options,
+			       const struct object_id *oid);
 
 /*
  * fsck a tag, and pass info about it back to the caller. This is
