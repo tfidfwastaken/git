@@ -54,6 +54,8 @@ int cmd_merge_index(int argc, const char **argv, const char *prefix)
 	if (repo_read_index(r) < 0)
 		die("invalid index");
 
+	ensure_full_index(r->index);
+
 	i = 1;
 	if (!strcmp(argv[i], "-o")) {
 		one_shot = 1;

@@ -2564,7 +2564,7 @@ static int blob_unchanged(struct merge_options *opt,
 	struct strbuf basebuf = STRBUF_INIT;
 	struct strbuf sidebuf = STRBUF_INIT;
 	int ret = 0; /* assume changed for safety */
-	const struct index_state *idx = &opt->priv->attr_index;
+	struct index_state *idx = &opt->priv->attr_index;
 
 	if (!idx->initialized)
 		initialize_attr_index(opt);
@@ -3369,6 +3369,8 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 
 	if (strmap_empty(&opt->priv->conflicted))
 		return 0;
+
+	ensure_full_index(index);
 
 	/* If any entries have skip_worktree set, we'll have to check 'em out */
 	state.force = 1;

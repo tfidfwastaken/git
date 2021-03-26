@@ -20,7 +20,7 @@
  * to use find_pathspecs_matching_against_index() instead.
  */
 void add_pathspec_matches_against_index(const struct pathspec *pathspec,
-					const struct index_state *istate,
+					struct index_state *istate,
 					char *seen,
 					enum ps_skip_worktree_action sw_action)
 {
@@ -37,6 +37,7 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
 			num_unmatched++;
 	if (!num_unmatched)
 		return;
+	ensure_full_index(istate);
 	for (i = 0; i < istate->cache_nr; i++) {
 		const struct cache_entry *ce = istate->cache[i];
 		if (sw_action == PS_IGNORE_SKIP_WORKTREE && ce_skip_worktree(ce))
@@ -54,7 +55,7 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
  * given pathspecs achieves against all items in the index.
  */
 char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
-					    const struct index_state *istate,
+					    struct index_state *istate,
 					    enum ps_skip_worktree_action sw_action)
 {
 	char *seen = xcalloc(pathspec->nr, 1);
@@ -721,7 +722,7 @@ void clear_pathspec(struct pathspec *pathspec)
 	pathspec->nr = 0;
 }
 
-int match_pathspec_attrs(const struct index_state *istate,
+int match_pathspec_attrs(struct index_state *istate,
 			 const char *name, int namelen,
 			 const struct pathspec_item *item)
 {

@@ -154,11 +154,11 @@ enum ps_skip_worktree_action {
   PS_IGNORE_SKIP_WORKTREE = 1
 };
 void add_pathspec_matches_against_index(const struct pathspec *pathspec,
-					const struct index_state *istate,
+					struct index_state *istate,
 					char *seen,
 					enum ps_skip_worktree_action sw_action);
 char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
-					    const struct index_state *istate,
+					    struct index_state *istate,
 					    enum ps_skip_worktree_action sw_action);
 char *find_pathspecs_matching_skip_worktree(const struct pathspec *pathspec);
 static inline int matches_skip_worktree(const struct pathspec *pathspec,
@@ -168,7 +168,7 @@ static inline int matches_skip_worktree(const struct pathspec *pathspec,
 		*seen_ptr = find_pathspecs_matching_skip_worktree(pathspec);
 	return (*seen_ptr)[item];
 }
-int match_pathspec_attrs(const struct index_state *istate,
+int match_pathspec_attrs(struct index_state *istate,
 			 const char *name, int namelen,
 			 const struct pathspec_item *item);
 

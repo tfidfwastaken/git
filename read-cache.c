@@ -549,7 +549,7 @@ int cache_name_stage_compare(const char *name1, int len1, int stage1, const char
 	return 0;
 }
 
-static int index_name_stage_pos(const struct index_state *istate, const char *name, int namelen, int stage)
+static int index_name_stage_pos(struct index_state *istate, const char *name, int namelen, int stage)
 {
 	int first, last;
 
@@ -567,10 +567,31 @@ static int index_name_stage_pos(const struct index_state *istate, const char *na
 		}
 		first = next+1;
 	}
+
+	if (istate->sparse_index &&
+	    first > 0) {
+		/* Note: first <= istate->cache_nr */
+		struct cache_entry *ce = istate->cache[first - 1];
+
+		/*
+		 * If we are in a sparse-index _and_ the entry before the
+		 * insertion position is a sparse-directory entry that is
+		 * an ancestor of 'name', then we need to expand the index
+		 * and search again. This will only trigger once, because
+		 * thereafter the index is fully expanded.
+		 */
+		if (S_ISSPARSEDIR(ce->ce_mode) &&
+		    ce_namelen(ce) < namelen &&
+		    !strncmp(name, ce->name, ce_namelen(ce))) {
+			ensure_full_index(istate);
+			return index_name_stage_pos(istate, name, namelen, stage);
+		}
+	}
+
 	return -first-1;
 }
 
-int index_name_pos(const struct index_state *istate, const char *name, int namelen)
+int index_name_pos(struct index_state *istate, const char *name, int namelen)
 {
 	return index_name_stage_pos(istate, name, namelen, 0);
 }
@@ -1592,6 +1613,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	 */
 	preload_index(istate, pathspec, 0);
 	trace2_region_enter("index", "refresh", NULL);
+	ensure_full_index(istate);
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new_entry;
 		int cache_errno = 0;
@@ -2512,6 +2534,7 @@ int repo_index_has_changes(struct repository *repo,
 		diff_flush(&opt);
 		return opt.flags.has_changes != 0;
 	} else {
+		ensure_full_index(istate);
 		for (i = 0; sb && i < istate->cache_nr; i++) {
 			if (i)
 				strbuf_addch(sb, ' ');
@@ -3427,8 +3450,8 @@ int repo_read_index_unmerged(struct repository *repo)
  * We helpfully remove a trailing "/" from directories so that
  * the output of read_directory can be used as-is.
  */
-int index_name_is_other(const struct index_state *istate, const char *name,
-		int namelen)
+int index_name_is_other(struct index_state *istate, const char *name,
+			int namelen)
 {
 	int pos;
 	if (namelen && name[namelen - 1] == '/')
@@ -3446,7 +3469,7 @@ int index_name_is_other(const struct index_state *istate, const char *name,
 	return 1;
 }
 
-void *read_blob_data_from_index(const struct index_state *istate,
+void *read_blob_data_from_index(struct index_state *istate,
 				const char *path, unsigned long *size)
 {
 	int pos, len;

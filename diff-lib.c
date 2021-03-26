@@ -103,6 +103,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 
 	if (diff_unmerged_stage < 0)
 		diff_unmerged_stage = 2;
+
 	entries = istate->cache_nr;
 	for (i = 0; i < entries; i++) {
 		unsigned int oldmode, newmode;

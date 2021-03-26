@@ -734,6 +734,7 @@ static int do_reupdate(int ac, const char **av,
 		 */
 		has_head = 0;
  redo:
+	ensure_full_index(&the_index);
 	for (pos = 0; pos < active_nr; pos++) {
 		const struct cache_entry *ce = active_cache[pos];
 		struct cache_entry *old = NULL;

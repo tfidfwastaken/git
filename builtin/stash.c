@@ -1412,6 +1412,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		int i;
 		char *ps_matched = xcalloc(ps->nr, 1);
 
+		ensure_full_index(&the_index);
 		for (i = 0; i < active_nr; i++)
 			ce_path_match(&the_index, active_cache[i], ps,
 				      ps_matched);

@@ -172,6 +172,7 @@ void unmerge_marked_index(struct index_state *istate)
 	if (!istate->resolve_undo)
 		return;
 
+	ensure_full_index(istate);
 	for (i = 0; i < istate->cache_nr; i++) {
 		const struct cache_entry *ce = istate->cache[i];
 		if (ce->ce_flags & CE_MATCHED)
@@ -186,6 +187,7 @@ void unmerge_index(struct index_state *istate, const struct pathspec *pathspec)
 	if (!istate->resolve_undo)
 		return;
 
+	ensure_full_index(istate);
 	for (i = 0; i < istate->cache_nr; i++) {
 		const struct cache_entry *ce = istate->cache[i];
 		if (!ce_path_match(istate, ce, pathspec, NULL))
