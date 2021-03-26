@@ -503,6 +503,9 @@ static enum extension_result handle_extension(const char *var,
 	} else if (!strcmp(ext, "refstorage")) {
 		data->ref_storage = xstrdup(value);
 		return EXTENSION_OK;
+	} else if (!strcmp(ext, "sparseindex")) {
+		data->sparse_index = 1;
+		return EXTENSION_OK;
 	}
 	return EXTENSION_UNKNOWN;
 }

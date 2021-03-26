@@ -26,6 +26,7 @@
 #include "thread-utils.h"
 #include "progress.h"
 #include "hook.h"
+#include "sparse-index.h"
 
 /* Mask for the name length in ce_flags in the on-disk index */
 
@@ -102,6 +103,9 @@ static const char *alternate_index_output;
 
 static void set_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
 {
+	if (S_ISSPARSEDIR(ce->ce_mode))
+		istate->sparse_index = 1;
+
 	istate->cache[nr] = ce;
 	add_name_hash(istate, ce);
 }
@@ -1000,8 +1004,14 @@ inside:
 
 			c = *path++;
 			if ((c == '.' && !verify_dotfile(path, mode)) ||
-			    is_dir_sep(c) || c == '\0')
+			    is_dir_sep(c))
 				return 0;
+			/*
+			 * allow terminating directory separators for
+			 * sparse directory entries.
+			 */
+			if (c == '\0')
+				return S_ISDIR(mode);
 		} else if (c == '\\' && protect_ntfs) {
 			if (is_ntfs_dotgit(path))
 				return 0;
@@ -2312,6 +2322,12 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	trace2_data_intmax("index", the_repository, "read/cache_nr",
 			   istate->cache_nr);
 
+	if (!istate->repo)
+		istate->repo = the_repository;
+	prepare_repo_settings(istate->repo);
+	if (istate->repo->settings.command_requires_full_index)
+		ensure_full_index(istate);
+
 	return istate->cache_nr;
 
 unmap:
@@ -3111,6 +3127,15 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 {
 	int ret;
 	struct run_hooks_opt hook_opt;
+	int was_full = !istate->sparse_index;
+
+	ret = convert_to_sparse(istate);
+
+	if (ret) {
+		warning(_("failed to convert to a sparse-index"));
+		return ret;
+	}
+
 	run_hooks_opt_init_async(&hook_opt);
 
 	/*
@@ -3122,6 +3147,9 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 	ret = do_write_index(istate, lock->tempfile, 0);
 	trace2_region_leave_printf("index", "do_write_index", the_repository,
 				   "%s", get_lock_file_path(lock));
+
+	if (was_full)
+		ensure_full_index(istate);
 
 	if (ret)
 		return ret;
@@ -3217,15 +3245,19 @@ static int write_shared_index(struct index_state *istate,
 			      struct tempfile **temp)
 {
 	struct split_index *si = istate->split_index;
-	int ret;
+	int ret, was_full = !istate->sparse_index;
 
 	move_cache_to_base_index(istate);
+	convert_to_sparse(istate);
 
 	trace2_region_enter_printf("index", "shared/do_write_index",
 				   the_repository, "%s", get_tempfile_path(*temp));
 	ret = do_write_index(si->base, *temp, 1);
 	trace2_region_leave_printf("index", "shared/do_write_index",
 				   the_repository, "%s", get_tempfile_path(*temp));
+
+	if (was_full)
+		ensure_full_index(istate);
 
 	if (ret)
 		return ret;
