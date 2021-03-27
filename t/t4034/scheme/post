@@ -1,0 +1,4 @@
+(define (my-func first second)
+  ; This is a (moderately) cool function.
+  (let ((c (add1 first)))
+    (format "one more than the total is %d" (+ c second))))
