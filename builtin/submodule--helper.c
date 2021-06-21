@@ -205,6 +205,25 @@ static char *relative_url(const char *remote_url,
 	return strbuf_detach(&sb, NULL);
 }
 
+static char *do_resolve_relative_url(const char *url)
+{
+	char *res;
+	char *remote = get_default_remote();
+	char *remoteurl = NULL;
+	struct strbuf sb = STRBUF_INIT;
+
+	strbuf_addf(&sb, "remote.%s.url", remote);
+	free(remote);
+
+	if (git_config_get_string(sb.buf, &remoteurl))
+		/* the repository is its own authoritative upstream */
+		remoteurl = xgetcwd();
+
+	res = relative_url(remoteurl, url, NULL);
+	free(remoteurl);
+	return res;
+}
+
 static int resolve_relative_url(int argc, const char **argv, const char *prefix)
 {
 	char *remoteurl = NULL;
