@@ -30,6 +30,14 @@
 typedef void (*each_submodule_fn)(const struct cache_entry *list_item,
 				  void *cb_data);
 
+static NORETURN void submodule_die(const char *err, va_list params)
+{
+	vfprintf(stderr, err, params);
+	fputc('\n', stderr);
+	fflush(stderr);
+	exit(1);
+}
+
 static char *get_default_remote(void)
 {
 	char *dest = NULL, *ret;
