@@ -2760,6 +2760,14 @@ static int module_set_branch(int argc, const char **argv, const char *prefix)
 	return !!ret;
 }
 
+static NORETURN void submodule_die(const char *err, va_list params)
+{
+	vfprintf(stderr, err, params);
+	fputc('\n', stderr);
+	fflush(stderr);
+	exit(1);
+}
+
 #define SUPPORT_SUPER_PREFIX (1<<0)
 
 struct cmd_struct {
