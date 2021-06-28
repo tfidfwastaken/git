@@ -2382,6 +2382,14 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	return update_submodules(&suc);
 }
 
+static NORETURN void submodule_die(const char *err, va_list params)
+{
+	vfprintf(stderr, err, params);
+	fputc('\n', stderr);
+	fflush(stderr);
+	exit(1);
+}
+
 static int resolve_relative_path(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf sb = STRBUF_INIT;
@@ -2746,14 +2754,6 @@ static int module_set_branch(int argc, const char **argv, const char *prefix)
 
 	free(config_name);
 	return !!ret;
-}
-
-static NORETURN void submodule_die(const char *err, va_list params)
-{
-	vfprintf(stderr, err, params);
-	fputc('\n', stderr);
-	fflush(stderr);
-	exit(1);
 }
 
 struct add_data {
