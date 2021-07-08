@@ -2764,16 +2764,10 @@ static int push_check(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
+static void do_ensure_core_worktree(const char *path)
 {
-	const char *path;
 	const char *cw;
 	struct repository subrepo;
-
-	if (argc != 2)
-		BUG("submodule--helper ensure-core-worktree <path>");
-
-	path = argv[1];
 
 	if (repo_submodule_init(&subrepo, the_repository, path, null_oid()))
 		die(_("could not get a repository handle for submodule '%s'"), path);
@@ -2794,6 +2788,17 @@ static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 		free(abs_path);
 		strbuf_release(&sb);
 	}
+}
+
+static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
+{
+	const char *path;
+
+	if (argc != 2)
+		BUG("submodule--helper ensure-core-worktree <path>");
+
+	path = argv[1];
+	do_ensure_core_worktree(path);
 
 	return 0;
 }
