@@ -147,7 +147,7 @@ cmd_add()
 
 	if ! git submodule--helper config --check-writeable >/dev/null 2>&1
 	then
-		 die "$(eval_gettext "please make sure that the .gitmodules file is in the working tree")"
+		 die "$(eval_gettext "fatal: please make sure that the .gitmodules file is in the working tree")"
 	fi
 
 	if test -n "$reference_path"
@@ -176,7 +176,7 @@ cmd_add()
 	case "$repo" in
 	./*|../*)
 		test -z "$wt_prefix" ||
-		die "$(gettext "Relative path can only be used from the toplevel of the working tree")"
+		die "$(gettext "fatal: Relative path can only be used from the toplevel of the working tree")"
 
 		# dereference source url relative to parent's url
 		realrepo=$(git submodule--helper resolve-relative-url "$repo") || exit
@@ -186,7 +186,7 @@ cmd_add()
 		realrepo=$repo
 		;;
 	*)
-		die "$(eval_gettext "repo URL: '\$repo' must be absolute or begin with ./|../")"
+		die "$(eval_gettext "fatal: repo URL: '\$repo' must be absolute or begin with ./|../")"
 	;;
 	esac
 
@@ -205,17 +205,17 @@ cmd_add()
 	if test -z "$force"
 	then
 		git ls-files --error-unmatch "$sm_path" > /dev/null 2>&1 &&
-		die "$(eval_gettext "'\$sm_path' already exists in the index")"
+		die "$(eval_gettext "fatal: '\$sm_path' already exists in the index")"
 	else
 		git ls-files -s "$sm_path" | sane_grep -v "^160000" > /dev/null 2>&1 &&
-		die "$(eval_gettext "'\$sm_path' already exists in the index and is not a submodule")"
+		die "$(eval_gettext "fatal: '\$sm_path' already exists in the index and is not a submodule")"
 	fi
 
 	if test -d "$sm_path" &&
 		test -z $(git -C "$sm_path" rev-parse --show-cdup 2>/dev/null)
 	then
 	    git -C "$sm_path" rev-parse --verify -q HEAD >/dev/null ||
-	    die "$(eval_gettext "'\$sm_path' does not have a commit checked out")"
+	    die "$(eval_gettext "fatal: '\$sm_path' does not have a commit checked out")"
 	fi
 
 	if test -z "$force"
@@ -238,7 +238,7 @@ cmd_add()
 
 	if ! git submodule--helper check-name "$sm_name"
 	then
-		die "$(eval_gettext "'$sm_name' is not a valid submodule name")"
+		die "$(eval_gettext "fatal: '$sm_name' is not a valid submodule name")"
 	fi
 
 	# perhaps the path exists and is already a git repo, else clone it
@@ -281,7 +281,7 @@ or you are unsure what this means choose another name with the '--name' option."
 	git config submodule."$sm_name".url "$realrepo"
 
 	git add --no-warn-embedded-repo $force "$sm_path" ||
-	die "$(eval_gettext "Failed to add submodule '\$sm_path'")"
+	die "$(eval_gettext "fatal: Failed to add submodule '\$sm_path'")"
 
 	git submodule--helper config submodule."$sm_name".path "$sm_path" &&
 	git submodule--helper config submodule."$sm_name".url "$repo" &&
@@ -290,7 +290,7 @@ or you are unsure what this means choose another name with the '--name' option."
 		git submodule--helper config submodule."$sm_name".branch "$branch"
 	fi &&
 	git add --force .gitmodules ||
-	die "$(eval_gettext "Failed to register submodule '\$sm_path'")"
+	die "$(eval_gettext "fatal: Failed to register submodule '\$sm_path'")"
 
 	# NEEDSWORK: In a multi-working-tree world, this needs to be
 	# set in the per-worktree config.
@@ -565,7 +565,7 @@ cmd_update()
 		else
 			subsha1=$(sanitize_submodule_env; cd "$sm_path" &&
 				git rev-parse --verify HEAD) ||
-			die "$(eval_gettext "Unable to find current revision in submodule path '\$displaypath'")"
+			die "$(eval_gettext "fatal: Unable to find current revision in submodule path '\$displaypath'")"
 		fi
 
 		if test -n "$remote"
@@ -575,12 +575,12 @@ cmd_update()
 			then
 				# Fetch remote before determining tracking $sha1
 				fetch_in_submodule "$sm_path" $depth ||
-				die "$(eval_gettext "Unable to fetch in submodule path '\$sm_path'")"
+				die "$(eval_gettext "fatal: Unable to fetch in submodule path '\$sm_path'")"
 			fi
 			remote_name=$(sanitize_submodule_env; cd "$sm_path" && git submodule--helper print-default-remote)
 			sha1=$(sanitize_submodule_env; cd "$sm_path" &&
 				git rev-parse --verify "${remote_name}/${branch}") ||
-			die "$(eval_gettext "Unable to find current \${remote_name}/\${branch} revision in submodule path '\$sm_path'")"
+			die "$(eval_gettext "fatal: Unable to find current \${remote_name}/\${branch} revision in submodule path '\$sm_path'")"
 		fi
 
 		if test "$subsha1" != "$sha1" || test -n "$force"
@@ -660,7 +660,7 @@ cmd_update()
 			res=$?
 			if test $res -gt 0
 			then
-				die_msg="$(eval_gettext "Failed to recurse into submodule path '\$displaypath'")"
+				die_msg="$(eval_gettext "fatal: Failed to recurse into submodule path '\$displaypath'")"
 				if test $res -ne 2
 				then
 					err="${err};$die_msg"
