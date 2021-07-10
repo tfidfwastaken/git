@@ -2466,7 +2466,7 @@ static int do_run_update_procedure(struct update_data *ud)
 	return run_update_command(ud, subforce);
 }
 
-static void update_submodule(struct update_clone_data *ucd)
+static void update_clone_submodule(struct update_clone_data *ucd)
 {
 	fprintf(stdout, "dummy %s %d\t%s\n",
 		oid_to_hex(&ucd->oid),
@@ -2474,7 +2474,7 @@ static void update_submodule(struct update_clone_data *ucd)
 		ucd->sub->path);
 }
 
-static int update_submodules(struct submodule_update_clone *suc)
+static int update_clone_submodules(struct submodule_update_clone *suc)
 {
 	int i;
 
@@ -2495,7 +2495,7 @@ static int update_submodules(struct submodule_update_clone *suc)
 		return 1;
 
 	for (i = 0; i < suc->update_clone_nr; i++)
-		update_submodule(&suc->update_clone[i]);
+		update_clone_submodule(&suc->update_clone[i]);
 
 	return 0;
 }
@@ -2560,7 +2560,7 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	if (pathspec.nr)
 		suc.warn_if_uninitialized = 1;
 
-	return update_submodules(&suc);
+	return update_clone_submodules(&suc);
 }
 
 static int run_update_procedure(int argc, const char **argv, const char *prefix)
