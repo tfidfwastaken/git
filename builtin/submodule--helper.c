@@ -2043,19 +2043,39 @@ struct submodule_update_clone {
 }
 
 struct update_data {
+	const char *prefix;
 	const char *recursive_prefix;
 	const char *sm_path;
 	const char *displaypath;
 	struct object_id sha1;
 	struct object_id subsha1;
-	struct submodule_update_strategy update_strategy;
+	int max_jobs;
 	int depth;
+	int recommend_shallow;
+	int single_branch;
+	unsigned int init: 1;
 	unsigned int force: 1;
 	unsigned int quiet: 1;
 	unsigned int nofetch: 1;
-	unsigned int just_cloned: 1;
+	unsigned int remote: 1;
+	unsigned int recursive: 1;
+	unsigned int progress: 1;
+	unsigned int dissociate: 1;
+	unsigned int require_init: 1;
+	unsigned warn_if_uninitialized : 1;
+	unsigned int just_cloned : 1;
+	struct submodule_update_strategy update_strategy;
+	struct string_list references;
+	struct module_list list;
 };
-#define UPDATE_DATA_INIT { .update_strategy = SUBMODULE_UPDATE_STRATEGY_INIT }
+#define UPDATE_DATA_INIT { \
+	.list = MODULE_LIST_INIT, \
+	.update_strategy = SUBMODULE_UPDATE_STRATEGY_INIT, \
+	.recommend_shallow = -1, \
+	.references = STRING_LIST_INIT_DUP, \
+	.single_branch = -1, \
+	.max_jobs = 1, \
+}
 
 static void next_submodule_warn_missing(struct submodule_update_clone *suc,
 		struct strbuf *out, const char *displaypath)
