@@ -29,11 +29,10 @@
 typedef void (*each_submodule_fn)(const struct cache_entry *list_item,
 				  void *cb_data);
 
-static char *get_default_remote(void)
+static char *repo_get_default_remote(struct repository *repo, const char *refname)
 {
 	char *dest = NULL, *ret;
 	struct strbuf sb = STRBUF_INIT;
-	const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
 
 	if (!refname)
 		die(_("No such ref: %s"), "HEAD");
@@ -46,13 +45,32 @@ static char *get_default_remote(void)
 		die(_("Expecting a full ref name, got %s"), refname);
 
 	strbuf_addf(&sb, "branch.%s.remote", refname);
-	if (git_config_get_string(sb.buf, &dest))
+	if (repo_config_get_string(repo, sb.buf, &dest))
 		ret = xstrdup("origin");
 	else
 		ret = dest;
 
 	strbuf_release(&sb);
 	return ret;
+}
+
+static char *get_default_remote_submodule(const char *module_path)
+{
+	const char *refname;
+	const struct submodule *sub;
+	struct repository subrepo;
+
+	refname = refs_resolve_ref_unsafe(get_submodule_ref_store(module_path),
+					  "HEAD", 0, NULL, NULL);
+	sub = submodule_from_path(the_repository, null_oid(), module_path);
+	repo_submodule_init(&subrepo, the_repository, sub);
+	return repo_get_default_remote(&subrepo, refname);
+}
+
+static char *get_default_remote(void)
+{
+	const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
+	return repo_get_default_remote(the_repository, refname);
 }
 
 static int print_default_remote(int argc, const char **argv, const char *prefix)
@@ -1369,7 +1387,6 @@ static void sync_submodule(const char *path, const char *prefix,
 	char *remote_key = NULL;
 	char *sub_origin_url, *super_config_url, *displaypath;
 	struct strbuf sb = STRBUF_INIT;
-	struct child_process cp = CHILD_PROCESS_INIT;
 	char *sub_config_path = NULL;
 
 	if (!is_submodule_active(the_repository, path))
@@ -1418,14 +1435,9 @@ static void sync_submodule(const char *path, const char *prefix,
 	if (!is_submodule_populated_gently(path, NULL))
 		goto cleanup;
 
-	prepare_submodule_repo_env(&cp.env_array);
-	cp.git_cmd = 1;
-	cp.dir = path;
-	strvec_pushl(&cp.args, "submodule--helper",
-		     "print-default-remote", NULL);
-
 	strbuf_reset(&sb);
-	if (capture_command(&cp, &sb, 0))
+	strbuf_addstr(&sb, get_default_remote_submodule(path));
+	if (!sb.buf)
 		die(_("failed to get the default remote for submodule '%s'"),
 		      path);
 
