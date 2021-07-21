@@ -2720,7 +2720,7 @@ static int push_check(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static void do_ensure_core_worktree(const char *path)
+static void ensure_core_worktree(const char *path)
 {
 	const struct submodule *sub;
 	const char *cw;
@@ -2749,19 +2749,6 @@ static void do_ensure_core_worktree(const char *path)
 		free(abs_path);
 		strbuf_release(&sb);
 	}
-}
-
-static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
-{
-	const char *path;
-
-	if (argc != 2)
-		BUG("submodule--helper ensure-core-worktree <path>");
-
-	path = argv[1];
-	do_ensure_core_worktree(path);
-
-	return 0;
 }
 
 static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
@@ -2997,7 +2984,7 @@ static int update_submodule(struct update_data *update_data)
 	char *prefixed_path;
 	struct string_list err = STRING_LIST_INIT_DUP;
 
-	do_ensure_core_worktree(update_data->sm_path);
+	ensure_core_worktree(update_data->sm_path);
 
 	if (update_data->recursive_prefix)
 		prefixed_path = xstrfmt("%s%s", update_data->recursive_prefix,
@@ -3243,7 +3230,6 @@ static struct cmd_struct commands[] = {
 	{"clone", module_clone, 0},
 	{"update", module_update, 0},
 	{"run-update-procedure", run_update_procedure, 0},
-	{"ensure-core-worktree", ensure_core_worktree, 0},
 	{"relative-path", resolve_relative_path, 0},
 	{"resolve-relative-url", resolve_relative_url, 0},
 	{"resolve-relative-url-test", resolve_relative_url_test, 0},
