@@ -2453,7 +2453,7 @@ cleanup:
 	return retval;
 }
 
-static int do_run_update_procedure(struct update_data *ud, struct string_list *err)
+static int run_update_procedure(struct update_data *ud, struct string_list *err)
 {
 	if ((!is_null_oid(&ud->sha1) && !is_null_oid(&ud->subsha1) && !oideq(&ud->sha1, &ud->subsha1)) ||
 	    is_null_oid(&ud->subsha1) || ud->force) {
@@ -2486,80 +2486,6 @@ static int do_run_update_procedure(struct update_data *ud, struct string_list *e
 	}
 
 	return 0;
-}
-
-static int run_update_procedure(int argc, const char **argv, const char *prefix)
-{
-	int force = 0, quiet = 0, nofetch = 0, just_cloned = 0;
-	char *prefixed_path, *update = NULL;
-	char *sha1 = NULL, *subsha1 = NULL;
-	struct string_list err = STRING_LIST_INIT_DUP;
-	struct update_data update_data = UPDATE_DATA_INIT;
-
-	struct option options[] = {
-		OPT__QUIET(&quiet, N_("suppress output for update by rebase or merge")),
-		OPT__FORCE(&force, N_("force checkout updates"), 0),
-		OPT_BOOL('N', "no-fetch", &nofetch,
-			 N_("don't fetch new objects from the remote site")),
-		OPT_BOOL(0, "just-cloned", &just_cloned,
-			 N_("overrides update mode in case the repository is a fresh clone")),
-		OPT_INTEGER(0, "depth", &update_data.depth, N_("depth for shallow fetch")),
-		OPT_STRING(0, "prefix", &prefix,
-			   N_("path"),
-			   N_("path into the working tree")),
-		OPT_STRING(0, "update", &update,
-			   N_("string"),
-			   N_("rebase, merge, checkout or none")),
-		OPT_STRING(0, "recursive-prefix", &update_data.recursive_prefix, N_("path"),
-			   N_("path into the working tree, across nested "
-			      "submodule boundaries")),
-		OPT_STRING(0, "sha1", &sha1, N_("string"),
-			   N_("SHA1 expected by superproject")),
-		OPT_STRING(0, "subsha1", &subsha1, N_("string"),
-			   N_("SHA1 of submodule's HEAD")),
-		OPT_END()
-	};
-
-	const char *const usage[] = {
-		N_("git submodule--helper run-update-procedure [<options>] <path>"),
-		NULL
-	};
-
-	argc = parse_options(argc, argv, prefix, options, usage, 0);
-
-	if (argc != 1)
-		usage_with_options(usage, options);
-
-	update_data.force = !!force;
-	update_data.quiet = !!quiet;
-	update_data.nofetch = !!nofetch;
-	update_data.just_cloned = !!just_cloned;
-	update_data.sm_path = argv[0];
-
-	if (sha1)
-		get_oid_hex(sha1, &update_data.sha1);
-	else
-		oidcpy(&update_data.sha1, null_oid());
-
-	if (subsha1)
-		get_oid_hex(subsha1, &update_data.subsha1);
-	else
-		oidcpy(&update_data.subsha1, null_oid());
-
-	if (update_data.recursive_prefix)
-		prefixed_path = xstrfmt("%s%s", update_data.recursive_prefix, update_data.sm_path);
-	else
-		prefixed_path = xstrdup(update_data.sm_path);
-
-	update_data.displaypath = get_submodule_displaypath(prefixed_path, prefix);
-
-	determine_submodule_update_strategy(the_repository, update_data.just_cloned,
-					    update_data.sm_path, update,
-					    &update_data.update_strategy);
-
-	free(prefixed_path);
-
-	return do_run_update_procedure(&update_data, &err);
 }
 
 static const char *remote_submodule_branch(const char *path)
@@ -2997,7 +2923,7 @@ static int update_submodule(struct update_data *update_data)
 		free(remote_ref);
 	}
 
-	if (do_run_update_procedure(update_data, &err))
+	if (run_update_procedure(update_data, &err))
 		return 1;
 
 	if (update_data->recursive) {
@@ -3203,7 +3129,6 @@ static struct cmd_struct commands[] = {
 	{"name", module_name, 0},
 	{"clone", module_clone, 0},
 	{"update", module_update, 0},
-	{"run-update-procedure", run_update_procedure, 0},
 	{"resolve-relative-url", resolve_relative_url, 0},
 	{"resolve-relative-url-test", resolve_relative_url_test, 0},
 	{"foreach", module_foreach, SUPPORT_SUPER_PREFIX},
