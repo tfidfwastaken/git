@@ -28,7 +28,11 @@ static int can_use_builtin_submodule(void)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf out = STRBUF_INIT;
+	int env = git_env_bool("GIT_TEST_SUBMODULE_USE_BUILTIN", -1);
 	int ret;
+
+	if (env != -1)
+		return env;
 
 	cp.git_cmd = 1;
 	strvec_pushl(&cp.args, "config", "--type=bool", "submodule.useBuiltin", NULL);
