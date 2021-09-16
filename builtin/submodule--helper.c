@@ -2454,7 +2454,7 @@ static int run_update_command(struct update_data *ud, int subforce, struct strin
 	return 0;
 }
 
-static int do_run_update_procedure(struct update_data *ud, struct string_list *err)
+static int run_update_procedure(struct update_data *ud, struct string_list *err)
 {
 	int subforce = is_null_oid(&ud->suboid) || ud->force;
 
@@ -2616,7 +2616,7 @@ static int push_check(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static void do_ensure_core_worktree(const char *path)
+static void ensure_core_worktree(const char *path)
 {
 	const char *cw;
 	struct repository subrepo;
@@ -2876,7 +2876,7 @@ static int update_submodule(struct update_data *update_data)
 	struct string_list err = STRING_LIST_INIT_DUP;
 	struct strbuf sb = STRBUF_INIT;
 
-	do_ensure_core_worktree(update_data->sm_path);
+	ensure_core_worktree(update_data->sm_path);
 
 	if (update_data->recursive_prefix)
 		prefixed_path = xstrfmt("%s%s", update_data->recursive_prefix,
@@ -2916,7 +2916,7 @@ static int update_submodule(struct update_data *update_data)
 	}
 
 	if (!oideq(&update_data->oid, &update_data->suboid) || update_data->force)
-		if (do_run_update_procedure(update_data, &err))
+		if (run_update_procedure(update_data, &err))
 			return 1;
 
 	/* cache pointer to superproject's gitdir */
